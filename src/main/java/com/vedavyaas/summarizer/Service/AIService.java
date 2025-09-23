@@ -25,8 +25,13 @@ public class AIService {
             "- Bullets must be short, scannable, and user-friendly.\n";
     public String getGroq(String messages){
         String prompt = envoke + messages;
-        String apiKey = System.getenv("GROQ_API_KEY");
-        String apiUrl = System.getenv("GROQ_API_URL");
+
+        Dotenv dotenv = Dotenv.configure()
+                .ignoreIfMissing()
+                .load();
+
+        String apiKey = dotenv.get("GROQ_API_KEY", System.getenv("GROQ_API_KEY"));
+        String apiUrl = dotenv.get("GROQ_API_URL", System.getenv("GROQ_API_URL"));
 
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();

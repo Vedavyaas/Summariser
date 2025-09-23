@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Summarizer</title>
+    <title>Twilio Config Saver</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-
-        nav a.active:hover,
-        nav a.active:focus { text-decoration: none; outline: none; }
 
         body {
             background: linear-gradient(to bottom right, #2b5876, #4e4376);
@@ -34,13 +31,12 @@
 
         nav {
             display: flex;
+            justify-content: center;
             gap: 28px;
             font-weight: 700;
             font-size: 1.1rem;
             max-width: 700px;
             width: 100%;
-            justify-content: center;
-            align-items: center;
             margin-top: 8px;
         }
 
@@ -50,11 +46,10 @@
             padding: 10px 20px;
             border-radius: 30px;
             transition: background-color 0.3s ease, transform 0.2s ease;
-            user-select: none;
         }
 
         nav a:hover { background-color: rgba(255,255,255,0.3); transform: scale(1.1); }
-        nav a.active { background-color: white; color: #0072ff; cursor: default; box-shadow: 0 0 8px #00c6ffaa; transform: scale(1.15); }
+        nav a.active { background-color: white; color: #0072ff; font-weight: bold; box-shadow: 0 0 8px #00c6ffaa; transform: scale(1.15); }
 
         .container {
             background: rgba(255,255,255,0.05);
@@ -68,18 +63,16 @@
             text-align: center;
         }
 
-        h1, h2 { color: #00c6ff; margin-bottom: 20px; }
+        h1 { color: #00c6ff; margin-bottom: 20px; }
 
-        textarea {
+        input {
             width: 100%;
-            height: 150px;
-            padding: 15px;
+            padding: 12px;
+            margin-bottom: 15px;
             font-size: 1rem;
             border-radius: 12px;
             border: none;
-            resize: vertical;
             outline: none;
-            margin-bottom: 15px;
         }
 
         button {
@@ -97,99 +90,87 @@
 
         button:hover { background: linear-gradient(to right, #00c6ff, #0072ff); }
 
-        .hidden { display: none; }
-
         #loading { font-style: italic; color: #ffdd57; animation: pulse 1.2s infinite; margin-top: 20px; }
+        .hidden { display: none; }
 
         @keyframes pulse {
             0%,100% { opacity: 1; }
             50% { opacity: 0.4; }
         }
 
-        #output {
+        #response {
             background-color: #222;
             margin-top: 20px;
             padding: 15px;
             border-radius: 12px;
-            white-space: pre-wrap;
             text-align: left;
             font-size: 1rem;
-            min-height: 120px;
+            min-height: 80px;
             overflow-y: auto;
         }
-
-        #output-area button { margin-top: 20px; background: #f44336; }
-        #output-area button:hover { background: #d32f2f; }
     </style>
 </head>
 <body>
 <header>
     <nav>
-        <a href="/" class="active">Home</a>
-        <a href="/input">Twilio Config</a>
+        <a href="/" >Home</a>
+        <a href="/input" class="active">Twilio Config</a>
     </nav>
 </header>
 
 <main class="container">
-    <h1>Summarizer</h1>
+    <h1>Enter Twilio Credentials</h1>
 
-    <div id="input-area">
-        <textarea id="inputText" placeholder="Paste your full event message here..."></textarea>
-        <button id="summarizeBtn" onclick="summarize()">Summarize</button>
+    <div id="form-area">
+        <input type="text" id="phoneNumber" placeholder="Phone Number" required />
+        <input type="text" id="twilioNumber" placeholder="Twilio Number" required />
+        <input type="text" id="sid" placeholder="SID" required />
+        <input type="password" id="auth" placeholder="Auth Token" required />
+
+        <button onclick="saveConfig()">Save Config</button>
     </div>
 
-    <div id="loading" class="hidden">Summarizing...</div>
+    <div id="loading" class="hidden">Saving...</div>
 
-    <div id="output-area" class="hidden">
-        <pre id="output"></pre>
-        <button id="backBtn" onclick="goBack()">Back</button>
-    </div>
+    <div id="response" class="hidden"></div>
 </main>
 
 <script>
-    async function summarize() {
-        const inputText = document.getElementById("inputText");
-        const summarizeBtn = document.getElementById("summarizeBtn");
-        const inputArea = document.getElementById("input-area");
-        const loading = document.getElementById("loading");
-        const outputArea = document.getElementById("output-area");
-        const output = document.getElementById("output");
+    async function saveConfig() {
+        const phoneNumber = document.getElementById("phoneNumber").value.trim();
+        const twilioNumber = document.getElementById("twilioNumber").value.trim();
+        const sid = document.getElementById("sid").value.trim();
+        const auth = document.getElementById("auth").value.trim();
 
-        const text = inputText.value.trim();
-        if (!text) {
-            alert("Please enter some text to summarize!");
+        if (!phoneNumber || !twilioNumber || !sid || !auth) {
+            alert("All fields are required!");
             return;
         }
 
-        inputArea.style.display = "none";
+        const loading = document.getElementById("loading");
+        const responseBox = document.getElementById("response");
+
         loading.classList.remove("hidden");
-        outputArea.classList.add("hidden");
+        responseBox.classList.add("hidden");
 
         try {
-            const response = await fetch(`/control/api?messages=${encodeURIComponent(text)}`);
+            const response = await fetch("/twilio/config", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phoneNumber, twilioNumber, sid, auth })
+            });
 
-            if (!response.ok) throw new Error(`Server error: ${response.status}`);
+            if (!response.ok) throw new Error("Server error: " + response.status);
 
             const result = await response.text();
 
             loading.classList.add("hidden");
-            output.textContent = result;
-            outputArea.classList.remove("hidden");
+            responseBox.textContent = "Config saved successfully!";
+            responseBox.classList.remove("hidden");
         } catch (err) {
             loading.classList.add("hidden");
-            alert("Failed to get summary: " + err.message);
-            inputArea.style.display = "block";
+            alert("Failed to save config: " + err.message);
         }
-    }
-
-    function goBack() {
-        const inputArea = document.getElementById("input-area");
-        const outputArea = document.getElementById("output-area");
-        const inputText = document.getElementById("inputText");
-
-        outputArea.classList.add("hidden");
-        inputArea.style.display = "block";
-        inputText.value = "";
     }
 </script>
 </body>

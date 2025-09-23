@@ -9,4 +9,9 @@ public class WebController {
     public String home(){
         return "index";
     }
+
+    @GetMapping("/input")
+    public String input(){
+        return "input";
+    }
 }
