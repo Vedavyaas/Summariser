@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Twilio Config Saver</title>
+    <title>WhatsApp Integration</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-
         body {
             background: linear-gradient(to bottom right, #2b5876, #4e4376);
             color: white;
@@ -15,7 +14,6 @@
             flex-direction: column;
             align-items: center;
         }
-
         header {
             background: linear-gradient(90deg, #0072ff, #00c6ff);
             padding: 12px 0;
@@ -28,29 +26,27 @@
             flex-direction: column;
             align-items: center;
         }
-
         nav {
             display: flex;
-            justify-content: center;
             gap: 28px;
             font-weight: 700;
             font-size: 1.1rem;
             max-width: 700px;
             width: 100%;
+            justify-content: center;
+            align-items: center;
             margin-top: 8px;
         }
-
         nav a {
             color: white;
             text-decoration: none;
             padding: 10px 20px;
             border-radius: 30px;
             transition: background-color 0.3s ease, transform 0.2s ease;
+            user-select: none;
         }
-
         nav a:hover { background-color: rgba(255,255,255,0.3); transform: scale(1.1); }
-        nav a.active { background-color: white; color: #0072ff; font-weight: bold; box-shadow: 0 0 8px #00c6ffaa; transform: scale(1.15); }
-
+        nav a.active { background-color: white; color: #0072ff; cursor: default; box-shadow: 0 0 8px #00c6ffaa; transform: scale(1.15); }
         .container {
             background: rgba(255,255,255,0.05);
             border-radius: 20px;
@@ -62,21 +58,19 @@
             margin-top: 30px;
             text-align: center;
         }
-
-        h1 { color: #00c6ff; margin-bottom: 20px; }
-
-        input {
-            width: 100%;
+        h1, h2 { color: #00c6ff; margin-bottom: 20px; }
+        p { margin-bottom: 15px; line-height: 1.5; }
+        .number-box {
+            background-color: rgba(0,198,255,0.1);
+            border: 2px solid #00c6ff;
             padding: 12px;
-            margin-bottom: 15px;
-            font-size: 1rem;
             border-radius: 12px;
-            border: none;
-            outline: none;
+            font-size: 1.2rem;
+            margin: 15px 0;
+            word-break: break-all;
         }
-
         button {
-            margin-top: 10px;
+            margin-top: 20px;
             padding: 14px 28px;
             border: none;
             border-radius: 12px;
@@ -87,91 +81,32 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
         }
-
         button:hover { background: linear-gradient(to right, #00c6ff, #0072ff); }
-
-        #loading { font-style: italic; color: #ffdd57; animation: pulse 1.2s infinite; margin-top: 20px; }
-        .hidden { display: none; }
-
-        @keyframes pulse {
-            0%,100% { opacity: 1; }
-            50% { opacity: 0.4; }
-        }
-
-        #response {
-            background-color: #222;
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: left;
-            font-size: 1rem;
-            min-height: 80px;
-            overflow-y: auto;
-        }
     </style>
 </head>
 <body>
 <header>
     <nav>
         <a href="/" >Home</a>
-        <a href="/input" class="active">Twilio Config</a>
+        <a href="/input" class="active">WhatsApp Integration</a>
     </nav>
 </header>
 
 <main class="container">
-    <h1>Enter Twilio Credentials</h1>
-
-    <div id="form-area">
-        <input type="text" id="phoneNumber" placeholder="Phone Number" required />
-        <input type="text" id="twilioNumber" placeholder="Twilio Number" required />
-        <input type="text" id="sid" placeholder="SID" required />
-        <input type="password" id="auth" placeholder="Auth Token" required />
-
-        <button onclick="saveConfig()">Save Config</button>
-    </div>
-
-    <div id="loading" class="hidden">Saving...</div>
-
-    <div id="response" class="hidden"></div>
+    <h1>WhatsApp Integration</h1>
+    <p>To use the WhatsApp summarization service, follow these steps:</p>
+    <ol style="text-align:left; margin-left: 20px; margin-bottom: 20px;">
+        <li>Save the following WhatsApp number in your contacts:</li>
+    </ol>
+    <div class="number-box">+14155238886</div>
+    <ol start="2" style="text-align:left; margin-left: 20px;">
+        <li>Send the following message to this number to join the service:</li>
+    </ol>
+    <div class="number-box">join hearing-thirty</div>
+    <ol start="3" style="text-align:left; margin-left: 20px;">
+        <li>Once joined, you can send any messages to this number for instant summarization.</li>
+    </ol>
+    <button onclick="window.location.href='/'">Back to Home</button>
 </main>
-
-<script>
-    async function saveConfig() {
-        const phoneNumber = document.getElementById("phoneNumber").value.trim();
-        const twilioNumber = document.getElementById("twilioNumber").value.trim();
-        const sid = document.getElementById("sid").value.trim();
-        const auth = document.getElementById("auth").value.trim();
-
-        if (!phoneNumber || !twilioNumber || !sid || !auth) {
-            alert("All fields are required!");
-            return;
-        }
-
-        const loading = document.getElementById("loading");
-        const responseBox = document.getElementById("response");
-
-        loading.classList.remove("hidden");
-        responseBox.classList.add("hidden");
-
-        try {
-            const response = await fetch("/twilio/config", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phoneNumber, twilioNumber, sid, auth })
-            });
-
-            if (!response.ok) throw new Error("Server error: " + response.status);
-
-            const result = await response.text();
-
-            loading.classList.add("hidden");
-            responseBox.textContent = "Config saved successfully!";
-            responseBox.classList.remove("hidden");
-        } catch (err) {
-            loading.classList.add("hidden");
-            alert("Failed to save config: " + err.message);
-        }
-    }
-</script>
 </body>
 </html>
